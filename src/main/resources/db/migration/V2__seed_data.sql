@@ -17,7 +17,7 @@ INSERT INTO events (id, name, description, event_date, event_type, venue_id, per
     'a1111111-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', '2023-09-13 12:00:00'),
     ('c2222222-2222-2222-2222-222222222222', 'Music of the Spheres', 'Coldplay world tour London show', '2024-01-20 20:00:00', 'CONCERT',
     'a2222222-2222-2222-2222-222222222222', 'b2222222-2222-2222-2222-222222222222', '2023-09-13 12:00:00'),
-    ('c3333333-3333-3333-3333-333333333333', 'Arijit Live NYC', 'Arijit Singh live in concert', '2024-02-05 18:30:00', 'CONCERT',
+    ('c3333333-3333-3333-3333-333333333333', 'Arijit Live NYC', 'Arijit Singh live in concert', '2024-02-07 18:30:00', 'CONCERT',
     'a1111111-1111-1111-1111-111111111111', 'b3333333-3333-3333-3333-333333333333', '2023-09-13 12:00:00');
 
 -- Tickets for Eras Tour NYC (8 rows x 10 seats = 80 tickets)
