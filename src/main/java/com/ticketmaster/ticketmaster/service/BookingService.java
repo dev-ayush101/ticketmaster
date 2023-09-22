@@ -29,6 +29,11 @@ public class BookingService {
 
     private static final Duration LOCK_TTL = Duration.ofMinutes(10);
 
+    public Booking getBooking(UUID bookingId) {
+        return bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+    }
+
     public Booking reserveTickets(UUID eventId, BookingRequest request) {
         List<Ticket> tickets = new ArrayList<>();
         List<String> acquiredLocks = new ArrayList<>();

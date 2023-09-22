@@ -21,6 +21,11 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.reserveTickets(eventId, request));
     }
 
+    @GetMapping("/{bookingId}")
+    public ResponseEntity<Booking> getBooking(@PathVariable UUID bookingId) {
+        return ResponseEntity.ok(bookingService.getBooking(bookingId));
+    }
+
     @PostMapping("/{bookingId}/confirm")
     public ResponseEntity<Booking> confirm(@PathVariable UUID bookingId, @RequestParam String userEmail) {
         return ResponseEntity.ok(bookingService.confirmBooking(bookingId, userEmail));
