@@ -7,6 +7,7 @@ For the full system design breakdown, see the [HLD notes](https://github.com/dev
 ## Tech Stack
 
 - **Backend:** Spring Boot 3, Java 17
+- **Frontend:** React 18, Vite, Tailwind CSS
 - **Database:** PostgreSQL 15
 - **Cache/Locking:** Redis 7
 - **Migrations:** Flyway
@@ -17,17 +18,53 @@ For the full system design breakdown, see the [HLD notes](https://github.com/dev
 ### Prerequisites
 
 - Java 17+
+- Node.js 20+
 - Docker & Docker Compose
 - Maven
 
 ### Run
 
 ```bash
+# start postgres and redis
 docker-compose up -d
+
+# start backend (terminal 1)
 ./mvnw spring-boot:run
+
+# start frontend (terminal 2)
+cd frontend
+npm install
+npm run dev
 ```
 
-App starts on `http://localhost:8080`
+Backend runs on `http://localhost:8080`, frontend on `http://localhost:3000`
+
+## Frontend
+
+The React frontend has 3 pages:
+
+- **Home** — search bar with event cards, click any card to view the event
+- **Event** — event details with an interactive seat map (8×10 grid per event), select seats and reserve
+- **Checkout** — 10-minute countdown timer mirroring the Redis lock TTL, mock payment form, confirm booking
+
+### Seat Map Color Coding
+
+| Color | Meaning |
+|-------|---------|
+| Green outline | Available — click to select |
+| Green filled | Selected by you |
+| Yellow | Reserved by another user |
+| Gray | Sold |
+
+### User Flow
+
+1. Search or browse events on the home page
+2. Click an event → see the seat map with real-time availability
+3. Select one or more seats → sticky bottom bar shows total price
+4. Click "Book Now" → seats are locked in Redis for 10 minutes
+5. Fill payment details on the checkout page (mock)
+6. Click "Pay" → booking confirmed, tickets marked as BOOKED
+7. If you don't pay within 10 minutes, the reservation expires and seats are released
 
 ## API Endpoints
 
