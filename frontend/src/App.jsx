@@ -8,9 +8,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <Toaster position="top-right" />
-      <div className="min-h-screen bg-gray-950 text-white">
-        <nav className="border-b border-gray-800 px-6 py-4">
-          <a href="/" className="text-xl font-bold text-purple-400">🎟️ TicketMaster</a>
+      <div className="min-h-screen bg-white text-gray-900">
+        <nav className="bg-[#dc3558] px-6 py-3">
+          <a href="/" className="text-xl font-bold text-white">🎟️ TicketMaster</a>
         </nav>
         <Routes>
           <Route path="/" element={<Home />} />
