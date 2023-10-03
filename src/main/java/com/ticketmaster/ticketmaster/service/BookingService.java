@@ -1,6 +1,7 @@
 package com.ticketmaster.ticketmaster.service;
 
 import com.ticketmaster.ticketmaster.dto.BookingRequest;
+import com.ticketmaster.ticketmaster.dto.SeatUpdate;
 import com.ticketmaster.ticketmaster.model.Booking;
 import com.ticketmaster.ticketmaster.model.BookingStatus;
 import com.ticketmaster.ticketmaster.model.Ticket;
@@ -26,6 +27,8 @@ public class BookingService {
     private final TicketRepository ticketRepository;
     private final BookingRepository bookingRepository;
     private final StringRedisTemplate redisTemplate;
+
+    private final SeatUpdateEmitter seatUpdateEmitter;
 
     private static final Duration LOCK_TTL = Duration.ofMinutes(10);
 
@@ -72,11 +75,22 @@ public class BookingService {
                     .createdAt(LocalDateTime.now())
                     .build();
 
+            // broadcast reserved status to all viewers
+            for (Ticket ticket : tickets) {
+                seatUpdateEmitter.broadcast(eventId,
+                        SeatUpdate.builder().ticketId(ticket.getId()).status("RESERVED").build());
+            }
+
             return bookingRepository.save(booking);
         }
         catch (Exception e) {
             for (String lockKey : acquiredLocks) {
                 redisTemplate.delete(lockKey);
+            }
+            // broadcast that seats are available again
+            for (UUID ticketId : request.getTicketIds()) {
+                seatUpdateEmitter.broadcast(eventId,
+                        SeatUpdate.builder().ticketId(ticketId).status("AVAILABLE").build());
             }
             throw e;
         }
@@ -99,6 +113,7 @@ public class BookingService {
             }
 
             ticket.setStatus(TicketStatus.BOOKED);
+            seatUpdateEmitter.broadcast(booking.getEventId(), SeatUpdate.builder().ticketId(ticket.getId()).status("BOOKED").build());
             ticketRepository.save(ticket);
 
             redisTemplate.delete(lockKey);
