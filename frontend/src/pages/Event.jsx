@@ -13,12 +13,26 @@ export default function Event() {
   const [booking, setBooking] = useState(false);
 
   useEffect(() => {
-    api.get(`/events/${eventId}`).then(res => {
-      setEvent(res.data.event);
-      setTickets(res.data.tickets);
-      setLoading(false);
-    });
-  }, [eventId]);
+      api.get(`/events/${eventId}`).then(res => {
+        setEvent(res.data.event);
+        setTickets(res.data.tickets);
+        setLoading(false);
+      });
+
+      // SSE: listen for real-time seat updates
+      const eventSource = new EventSource(`/api/events/${eventId}/stream`);
+
+      eventSource.addEventListener('seat-update', (e) => {
+        const update = JSON.parse(e.data);
+        setTickets(prev => prev.map(t =>
+          t.id === update.ticketId ? { ...t, status: update.status } : t
+        ));
+        // deselect if someone else grabbed it
+        setSelected(prev => prev.filter(id => id !== update.ticketId));
+      });
+
+      return () => eventSource.close();
+    }, [eventId]);
 
   const toggleSeat = (ticket) => {
     if (ticket.status !== 'AVAILABLE') return;
