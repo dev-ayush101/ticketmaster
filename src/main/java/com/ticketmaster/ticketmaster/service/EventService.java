@@ -2,15 +2,18 @@ package com.ticketmaster.ticketmaster.service;
 
 import com.ticketmaster.ticketmaster.dto.EventDetailResponse;
 import com.ticketmaster.ticketmaster.model.Event;
+import com.ticketmaster.ticketmaster.model.EventDocument;
 import com.ticketmaster.ticketmaster.repository.EventRepository;
 import com.ticketmaster.ticketmaster.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -19,6 +22,7 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final TicketRepository ticketRepository;
+    private final EventSearchService eventSearchService;
 
     public EventDetailResponse getEvent(UUID eventId) {
         Event event = eventRepository.findById(eventId)
@@ -37,14 +41,24 @@ public class EventService {
         boolean hasKeyword = (keyword != null) && (!keyword.isBlank());
         boolean hasDates = (start != null) && (end != null);
 
-        if (hasKeyword && hasDates) {
-            return eventRepository.searchWithKeywordAndDates(keyword, start, end, pageable);
-        } else if (hasKeyword) {
-            return eventRepository.searchWithKeyword(keyword, pageable);
-        } else if (hasDates) {
-            return eventRepository.searchByDates(start, end, pageable);
-        } else {
-            return eventRepository.findAll(pageable);
+        if (hasKeyword) {
+            List<EventDocument> docs = eventSearchService.search(keyword);
+            List<UUID> ids = docs.stream().map(d -> UUID.fromString(d.getId())).toList();
+            if (ids.isEmpty()) return Page.empty(pageable);
+
+            List<Event> events = eventRepository.findAllById(ids);
+
+            if (hasDates) {
+                events = events.stream()
+                        .filter(e -> !e.getEventDate().isBefore(start) && !e.getEventDate().isAfter(end))
+                        .toList();
+            }
+            return new PageImpl<>(events, pageable, events.size());
         }
+
+        if (hasDates) {
+            return eventRepository.searchByDates(start, end, pageable);
+        }
+        return eventRepository.findAll(pageable);
     }
 }
