@@ -30,6 +30,8 @@ public class BookingService {
 
     private final SeatUpdateEmitter seatUpdateEmitter;
 
+    private final WaitingQueueService waitingQueueService;
+
     private static final Duration LOCK_TTL = Duration.ofMinutes(10);
 
     public Booking getBooking(UUID bookingId) {
@@ -38,6 +40,11 @@ public class BookingService {
     }
 
     public Booking reserveTickets(UUID eventId, BookingRequest request) {
+
+        if (!waitingQueueService.isAdmitted(eventId, request.getUserEmail())) {
+            throw new RuntimeException("You must wait in the queue before booking");
+        }
+
         List<Ticket> tickets = new ArrayList<>();
         List<String> acquiredLocks = new ArrayList<>();
 
