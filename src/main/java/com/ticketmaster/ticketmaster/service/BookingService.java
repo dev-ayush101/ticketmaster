@@ -59,15 +59,15 @@ public class BookingService {
 
                 acquiredLocks.add(lockKey);
 
+                double expiresAt = System.currentTimeMillis() + LOCK_TTL.toMillis();
+                redisTemplate.opsForZSet().add("event:" + eventId + ":reserved", ticketId.toString(), expiresAt);
+
                 Ticket ticket = ticketRepository.findById(ticketId)
                         .orElseThrow(() -> new RuntimeException("Ticket not found: " + ticketId));
 
                 if (ticket.getStatus() != TicketStatus.AVAILABLE) {
                     throw new RuntimeException("Ticket " + ticketId + " is not available");
                 }
-
-                ticket.setStatus(TicketStatus.RESERVED);
-                ticketRepository.save(ticket);
 
                 tickets.add(ticket);
             }
@@ -97,12 +97,8 @@ public class BookingService {
             for (String lockKey : acquiredLocks) {
                 redisTemplate.delete(lockKey);
             }
-            for (Ticket ticket : tickets) {
-                ticket.setStatus(TicketStatus.AVAILABLE);
-                ticketRepository.save(ticket);
-            }
-            // broadcast that seats are available again
             for (UUID ticketId : request.getTicketIds()) {
+                redisTemplate.opsForZSet().remove("event:" + eventId + ":reserved", ticketId.toString());
                 seatUpdateEmitter.broadcast(eventId,
                         SeatUpdate.builder().ticketId(ticketId).status("AVAILABLE").build());
             }
@@ -131,6 +127,7 @@ public class BookingService {
             ticketRepository.save(ticket);
 
             redisTemplate.delete(lockKey);
+            redisTemplate.opsForZSet().remove("event:" + booking.getEventId() + ":reserved", ticket.getId().toString());
         }
 
         booking.setStatus(BookingStatus.CONFIRMED);
