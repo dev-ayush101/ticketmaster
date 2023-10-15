@@ -66,6 +66,9 @@ public class BookingService {
                     throw new RuntimeException("Ticket " + ticketId + " is not available");
                 }
 
+                ticket.setStatus(TicketStatus.RESERVED);
+                ticketRepository.save(ticket);
+
                 tickets.add(ticket);
             }
 
@@ -93,6 +96,10 @@ public class BookingService {
         catch (Exception e) {
             for (String lockKey : acquiredLocks) {
                 redisTemplate.delete(lockKey);
+            }
+            for (Ticket ticket : tickets) {
+                ticket.setStatus(TicketStatus.AVAILABLE);
+                ticketRepository.save(ticket);
             }
             // broadcast that seats are available again
             for (UUID ticketId : request.getTicketIds()) {
