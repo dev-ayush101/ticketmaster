@@ -93,7 +93,7 @@ export default function Event() {
         userEmail: email
       });
       toast.success('Seats reserved!');
-      navigate(`/checkout/${res.data.id}`);
+      navigate(`/checkout/${res.data.id}?email=${encodeURIComponent(email)}`);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to reserve');
       setBooking(false);

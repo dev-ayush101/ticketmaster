@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../api';
 
 export default function Checkout() {
   const { bookingId } = useParams();
+  const [searchParams] = useSearchParams();
+  const userEmail = searchParams.get('email');
   const navigate = useNavigate();
   const [booking, setBooking] = useState(null);
   const [timeLeft, setTimeLeft] = useState(600);
@@ -27,7 +29,7 @@ export default function Checkout() {
   const handleConfirm = async () => {
     setConfirming(true);
     try {
-      await api.post(`/bookings/${bookingId}/confirm?userEmail=ayush@test.com`);
+      await api.post(`/bookings/${bookingId}/confirm?userEmail=${encodeURIComponent(userEmail)}`);
       toast.success('Booking confirmed!');
       navigate('/');
     } catch (err) {
