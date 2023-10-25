@@ -1,5 +1,7 @@
 # Ticketmaster — Online Ticket Booking System
 
+![CI](https://github.com/dev-ayush101/ticketmaster/actions/workflows/ci.yml/badge.svg)
+
 A system design implementation of an online ticket booking platform, inspired by Ticketmaster. Built to demonstrate handling of seat reservations, distributed locking, real-time updates, and concurrent booking scenarios.
 
 For the full system design breakdown, see the [HLD notes](https://github.com/dev-ayush101/ReadmeForLife/blob/main/hld-problems/TicketMaster%20-%20Event%20Booking%20Platform.md).
@@ -13,21 +15,29 @@ For the full system design breakdown, see the [HLD notes](https://github.com/dev
 - **Search:** Elasticsearch 8.17
 - **Migrations:** Flyway
 - **Containerization:** Docker Compose
+- **CI:** GitHub Actions
 
 ## Getting Started
 
 ### Prerequisites
 
-- Java 17+
-- Node.js 20+
 - Docker & Docker Compose
-- Maven
 
-### Run
+### Run (Docker — recommended)
 
 ```bash
-# start postgres, redis, and elasticsearch
-docker-compose up -d
+docker-compose up --build
+```
+
+This starts everything — PostgreSQL, Redis, Elasticsearch, backend, and frontend. The backend waits for Elasticsearch to be healthy before starting.
+
+Frontend: `http://localhost:3000` | Backend: `http://localhost:8080`
+
+### Run (Local development)
+
+```bash
+# start infrastructure
+docker-compose up -d postgres redis elasticsearch
 
 # start backend (terminal 1)
 ./mvnw spring-boot:run
@@ -38,7 +48,16 @@ npm install
 npm run dev
 ```
 
-Backend runs on `http://localhost:8080`, frontend on `http://localhost:3000`
+### Run Tests
+
+```bash
+# all tests (requires PG, Redis, ES running)
+./mvnw test
+
+# individual test suites
+./mvnw test -Dtest=ConcurrencyTest
+./mvnw test -Dtest=EdgeCaseTest
+```
 
 ## Frontend
 
@@ -242,6 +261,18 @@ The DB only stores two ticket states: `AVAILABLE` and `BOOKED`. Temporary reserv
 - **Virtual waiting queue** — controls traffic flow during high-demand events, prevents system overload
 - **Tiered pricing** — front rows cost more, back rows cheaper (seeded per event)
 - **Shared database** across services — data is tightly coupled (bookings need tickets need events), ACID transactions required
+
+## Testing
+
+### Concurrency Test
+
+Simulates 10 users trying to book the same seat simultaneously. Verifies that Redis `SET NX` ensures exactly 1 user succeeds and 9 are rejected — no double booking.
+
+### Edge Case Tests
+
+- **Already booked ticket** — rejects reservation for a sold seat
+- **Invalid ticket ID** — rejects reservation with a non-existent ticket
+- **Double confirm** — rejects confirming an already-confirmed booking
 
 ## Data Model
 
